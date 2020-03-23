@@ -1,6 +1,7 @@
 import sys
 import re
 import time
+from enum import Enum
 import datetime as dt
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
@@ -15,14 +16,14 @@ ignored_exceptions = (NoSuchElementException, StaleElementReferenceException,)
 wait = WebDriverWait(driver, 10, ignored_exceptions=ignored_exceptions)
 
 
-Class Studio(Enum):
+class Studio(Enum):
     GINZA = "0001"
     AOYAMA = "0002"
     EBISU = "0003"
     SHINJUKU = "0004"
     SAKAE = "0005"
     IKEBUKURO = "0006"
-    SHINJUKU = "0007"
+    HANEDA = "0007"
     UMEDA = "0008"
     OMIYA = "0009"
 
@@ -49,7 +50,7 @@ def latest_reserve(_after_hour):
     login()
     time.sleep(1)
 
-    driver.get("https://www.b-monster.jp/reserve/?studio_code=" + Studio.EBISU)
+    driver.get("https://www.b-monster.jp/reserve/?studio_code=" + Studio.EBISU.value)
     wait.until(EC.presence_of_all_elements_located)
 
     now = dt.datetime.now()
@@ -65,14 +66,14 @@ def latest_reserve(_after_hour):
                 timearr_end = tttime[-5:]
                 start_time = dt.datetime(now.year, now.month, now.day, int(timearr[0]), int(timearr[1]), 0)
                 if start_time > now + dt.timedelta(hours=_after_hour):
-                    print("本日の" + Studio.EBISU + "スタジオ: " + ttinstructor + "の" + timearr[0] + ":" + timearr[1] + "~" + timearr_end + "の回の予約を試みます。")
+                    print("本日の" + Studio.EBISU.value + "スタジオ: " + ttinstructor + "の" + timearr[0] + ":" + timearr[1] + "~" + timearr_end + "の回の予約を試みます。")
                     anchor = k.find_element_by_css_selector("a:first-child")
                     anchor.click()
                     break
             break
         break
 
-    wait.until(EC.presence_of_element_located((By.ID, 'select-bag')))
+    time.sleep(1)
     return
 
 def fixed_reserve(_url):
@@ -159,7 +160,7 @@ def reload_page(_interval):
 if __name__ == '__main__':
     args = sys.argv
     if len(args) < 2:
-        hour = 1
+        hour = 0
         print("直近" + str(hour) + "時間以降の予約が可能か確認します")
         latest_reserve(hour)
     else:
