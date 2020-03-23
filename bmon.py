@@ -160,7 +160,7 @@ def reload_page(_interval):
 if __name__ == '__main__':
     args = sys.argv
     if len(args) < 2:
-        hour = 0
+        hour = 1
         print("直近" + str(hour) + "時間以降の予約が可能か確認します")
         latest_reserve(hour)
     else:
@@ -175,7 +175,7 @@ if __name__ == '__main__':
 
     threshold = 0
     while not has_vacancy():
-        reload_interval = 3 # 3秒に1回更新 => 12回で1分
+        reload_interval = 5 # 3秒に1回更新 => 12回で1分
         reload_page(reload_interval)
         threshold += 1
         print("リロード回数" + str(threshold))
