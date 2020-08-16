@@ -3,6 +3,7 @@ import re
 import time
 from enum import Enum
 import datetime as dt
+import urllib.parse
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
@@ -13,7 +14,7 @@ from selenium.common.exceptions import NoSuchElementException, StaleElementRefer
 
 driver = webdriver.Chrome("./chromedriver")
 ignored_exceptions = (NoSuchElementException, StaleElementReferenceException,)
-wait = WebDriverWait(driver, 10, ignored_exceptions=ignored_exceptions)
+wait = WebDriverWait(driver, 30, ignored_exceptions=ignored_exceptions)
 
 
 class Studio(Enum):
@@ -57,6 +58,7 @@ def latest_reserve(_after_hour):
 
     print("現在時刻は " + now.strftime("%Y/%m/%d %H:%M:%S") + "です")
 
+    wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'flex-no-wrap')))
     for i in driver.find_elements_by_class_name("flex-no-wrap"):
         for j in i.find_elements_by_css_selector(".daily-panel"):
             for k in j.find_elements_by_css_selector(".panel.whats-program-panel"):
@@ -88,6 +90,16 @@ def fixed_reserve(_url):
 def has_vacancy():
     wait.until(EC.presence_of_element_located((By.ID, 'select-bag')))
     time.sleep(1)
+    global studio_check
+    if (studio_check == 0):
+	    _cur_url = driver.current_url
+	    _qs = urllib.parse.urlparse(_cur_url).query
+	    _qs_d = urllib.parse.parse_qs(_qs)
+	    _studio_code = _qs_d['studio_code'][0]
+	    for studio in Studio:
+	        if _studio_code == studio.value:
+	            print(studio.name + "スタジオでの予約を試みています。")
+	            studio_check += 1
     _parent = driver.find_element_by_id('select-bag')
     try:
         if _parent.find_elements_by_css_selector('.form-box'):
@@ -122,7 +134,9 @@ def get_vacant_bags():
 def choose_bag(_vac_bags):
     print("サンドバッグ選択")
     # ここには、選んだStudio.Enumのサンドバッグ番号を自分の優先度順に並べてください
-    fav_bags = ["46","48","49","51","38","36","34","32","30","43","63","61","59","57","55","40","25","23","21","19","17","15","52","67","42","27","74","72","76","70","80","68","02","04","07","92","94","14"]
+    #fav_bags = ["46","48","49","51","38","36","34","32","30","43","63","61","59","57","55","40","25","23","21","19","17","15","52","67","42","27","74","72","76","70","80","68","02","04","07","92","94","14"]
+    # ↓恵比寿用 2020.08時点
+    fav_bags = ["47","45","51","44","58","56","60","62","54","64","33","35","31","37","39","29","20","18","22","24","26","16","73","71","75","77","69","79","05","07","09","03","11","01","41","28","13","86","88","90","84","66","81","84","92","82","94"]
     # e.g.) _vac_bags = ["03", "05", "04", "02", "01", "36"]
 
     candidate = min((s for s in range(len(fav_bags)) if fav_bags[s] in _vac_bags), default=-1)
@@ -174,8 +188,9 @@ if __name__ == '__main__':
             quit()
 
     threshold = 0
+    studio_check = 0
     while not has_vacancy():
-        reload_interval = 5 # 3秒に1回更新 => 12回で1分
+        reload_interval = 3 # 3秒に1回更新 => 12回で1分
         reload_page(reload_interval)
         threshold += 1
         print("リロード回数" + str(threshold))
